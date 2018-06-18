@@ -15,6 +15,12 @@ For more information look here: https://en.wikipedia.org/wiki/ISO_8601#Durations
 var durationString = "P3Y6M4DT12H30M5S"
 var components = DateComponents.durationFrom8601String(durationString)
 ```
+## Donation
+
+If you like my open source libraries, you can sponsor it! ☺️
+
+[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.me/leonx98)
+
 ## License
 This file is licensed under the MIT License.
 
