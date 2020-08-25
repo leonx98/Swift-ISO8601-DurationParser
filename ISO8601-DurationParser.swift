@@ -38,99 +38,72 @@ import Foundation
  */
 
 extension DateComponents {
-    //Note: Does not handle decimal values or overflow values
-    //Format: PnYnMnDTnHnMnS or PnW
+    // Note: Does not handle decimal values or overflow values
+    // Format: PnYnMnDTnHnMnS or PnW
     static func durationFrom8601String(durationString: String) -> DateComponents {
-        let timeDesignator = CharacterSet(charactersIn:"HMS")
-        let periodDesignator = CharacterSet(charactersIn:"YMD")
-        
+        var durationString = durationString
         var dateComponents = DateComponents()
-        let mutableDurationString = durationString.mutableCopy() as! NSMutableString
-        
-        let pRange = mutableDurationString.range(of: "P")
-        if pRange.location == NSNotFound {
-            self.logErrorMessage(durationString: durationString)
-            return dateComponents;
-        } else {
-            mutableDurationString.deleteCharacters(in: pRange)
+
+        guard durationString.contains("P") else {
+            logErrorMessage(durationString: durationString)
+            return dateComponents
         }
-        
-        
-        if (durationString.range(of: "W") != nil) {
-            var weekValues = componentsForString(string: mutableDurationString as String, designatorSet: CharacterSet(charactersIn: "W"))
-            let weekValue: NSString? = weekValues["W"]! as NSString
-            
-            if (weekValue != nil) {
-                 //7 day week specified in ISO 8601 standard
-                dateComponents.day = Int(weekValue!.doubleValue * 7.0)
+
+        durationString = durationString.replacingOccurrences(of: "P", with: "")
+
+        if durationString.contains("W") {
+            let weekValues = componentsForString(durationString, designatorSet: CharacterSet(charactersIn: "W"))
+
+            if let weekValue = weekValues["W"], let weekValueDouble = Double(weekValue) {
+                // 7 day week specified in ISO 8601 standard
+                dateComponents.day = Int(weekValueDouble * 7.0)
             }
             return dateComponents
         }
-        
-        let tRange = mutableDurationString.range(of: "T", options: .literal)
-        var periodString = ""
-        var timeString = ""
+
+        let tRange = (durationString as NSString).range(of: "T", options: .literal)
+        let periodString: String
+        let timeString: String
         if tRange.location == NSNotFound {
-            periodString = mutableDurationString as String
-            
+            periodString = durationString
+            timeString = ""
         } else {
-            periodString = mutableDurationString.substring(to: tRange.location)
-            timeString = mutableDurationString.substring(from: tRange.location + 1)
+            periodString = (durationString as NSString).substring(to: tRange.location)
+            timeString = (durationString as NSString).substring(from: tRange.location + 1)
         }
-        
-        //DnMnYn
-        let periodValues = componentsForString(string: periodString, designatorSet: periodDesignator)
-        for (key, obj) in periodValues {
-            let value = (obj as NSString).integerValue
-            if key == "D" {
-                dateComponents.day = value
-            } else if key == "M" {
-                dateComponents.month = value
-            } else if key == "Y" {
-                dateComponents.year = value
-            }
-        }
-        
-        //SnMnHn
-        let timeValues = componentsForString(string: timeString, designatorSet: timeDesignator)
-        for (key, obj) in timeValues {
-            let value = (obj as NSString).integerValue
-            if key == "S" {
-                dateComponents.second = value
-            } else if key == "M" {
-                dateComponents.minute = value
-            } else if key == "H" {
-                dateComponents.hour = value
-            }
-        }
-        
+
+        // DnMnYn
+        let periodValues = componentsForString(periodString, designatorSet: CharacterSet(charactersIn: "YMD"))
+        dateComponents.day = Int(periodValues["D"] ?? "")
+        dateComponents.month = Int(periodValues["M"] ?? "")
+        dateComponents.year = Int(periodValues["Y"] ?? "")
+
+        // SnMnHn
+        let timeValues = componentsForString(timeString, designatorSet: CharacterSet(charactersIn: "HMS"))
+        dateComponents.second = Int(timeValues["S"] ?? "")
+        dateComponents.minute = Int(timeValues["M"] ?? "")
+        dateComponents.hour = Int(timeValues["H"] ?? "")
+
         return dateComponents
     }
-    
-    static func componentsForString(string: String, designatorSet: CharacterSet) -> Dictionary<String, String> {
-        if string.count == 0 {
-            return Dictionary()
+
+    private static func componentsForString(_ string: String, designatorSet: CharacterSet) -> [String: String] {
+        if string.isEmpty {
+            return [:]
         }
-        let numericalSet = NSCharacterSet.decimalDigits
-        let componentValues = (string.components(separatedBy: designatorSet as CharacterSet) as NSArray).mutableCopy() as! NSMutableArray
-        let designatorValues = (string.components(separatedBy: numericalSet) as NSArray).mutableCopy() as! NSMutableArray
-        componentValues.remove("")
-        designatorValues.remove("")
-        if componentValues.count == designatorValues.count {
-            var dictionary = Dictionary<String, String>(minimumCapacity: componentValues.count)
-            for i in 0...componentValues.count - 1 {
-                let key = designatorValues[i] as! String
-                let value = componentValues[i] as! String
-                dictionary[key] = value
-            }
-            return dictionary
-        } else {
+
+        let componentValues = string.components(separatedBy: designatorSet).filter { !$0.isEmpty }
+        let designatorValues = string.components(separatedBy: .decimalDigits).filter { !$0.isEmpty }
+
+        guard componentValues.count == designatorValues.count else {
             print("String: \(string) has an invalid format")
+            return [:]
         }
-        return Dictionary()
+
+        return Dictionary(uniqueKeysWithValues: zip(designatorValues, componentValues))
     }
-    
-    static func logErrorMessage(durationString: String) {
+
+    private static func logErrorMessage(durationString: String) {
         print("String: \(durationString) has an invalid format")
         print("The durationString must have a format of PnYnMnDTnHnMnS or PnW")
     }
