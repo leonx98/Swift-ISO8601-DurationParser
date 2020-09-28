@@ -1,5 +1,5 @@
 # Swift/ISO8601-Duration Parser
-Swift 4 Extension which converts ISO 8601 duration strings into a ‘DateComponents‘ object
+Swift 5 extension which converts ISO 8601 duration strings into a `DateComponents` object.
 
 
 ### Examples
@@ -12,8 +12,8 @@ For more information look here: https://en.wikipedia.org/wiki/ISO_8601#Durations
 
 ### Usage
 ```swift
-var durationString = "P3Y6M4DT12H30M5S"
-var components = DateComponents.durationFrom8601String(durationString)
+let durationString = "P3Y6M4DT12H30M5S"
+let components = DateComponents.durationFrom8601String(durationString)
 ```
 ## Donation
 
