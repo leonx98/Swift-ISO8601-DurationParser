@@ -1,7 +1,4 @@
 //
-//  ISO8601-DurationParser.swift
-//  ISO8601-DurationParser
-//
 //  The MIT License (MIT)
 //
 //  Copyright (c) 2018 Leon Hoppe
@@ -37,19 +34,17 @@ import Foundation
  * For more information look here: http://en.wikipedia.org/wiki/ISO_8601#Durations
  */
 
-extension DateComponents {
+public extension DateComponents {
     // Note: Does not handle decimal values or overflow values
     // Format: PnYnMnDTnHnMnS or PnW
-    static func durationFrom8601String(durationString: String) -> DateComponents {
-        var durationString = durationString
-        var dateComponents = DateComponents()
-
-        guard durationString.contains("P") else {
+    static func durationFrom8601String(durationString: String) -> DateComponents? {
+        guard durationString.starts(with: "P") else {
             logErrorMessage(durationString: durationString)
-            return dateComponents
+            return nil
         }
 
-        durationString = durationString.replacingOccurrences(of: "P", with: "")
+        let durationString = String(durationString.dropFirst())
+        var dateComponents = DateComponents()
 
         if durationString.contains("W") {
             let weekValues = componentsForString(durationString, designatorSet: CharacterSet(charactersIn: "W"))
