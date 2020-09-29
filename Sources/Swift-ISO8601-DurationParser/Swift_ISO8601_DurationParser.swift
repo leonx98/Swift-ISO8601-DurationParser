@@ -1,7 +1,4 @@
 //
-//  ISO8601-DurationParser.swift
-//  ISO8601-DurationParser
-//
 //  The MIT License (MIT)
 //
 //  Copyright (c) 2018 Leon Hoppe
@@ -37,7 +34,7 @@ import Foundation
  * For more information look here: http://en.wikipedia.org/wiki/ISO_8601#Durations
  */
 
-extension DateComponents {
+public extension DateComponents {
     // Note: Does not handle decimal values or overflow values
     // Format: PnYnMnDTnHnMnS or PnW
     static func durationFrom8601String(durationString: String) -> DateComponents {
