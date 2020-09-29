@@ -37,7 +37,7 @@ import Foundation
 public extension DateComponents {
     // Note: Does not handle decimal values or overflow values
     // Format: PnYnMnDTnHnMnS or PnW
-    static func durationFrom8601String(durationString: String) -> DateComponents? {
+    static func durationFrom8601String(_ durationString: String) -> DateComponents? {
         guard durationString.starts(with: "P") else {
             logErrorMessage(durationString: durationString)
             return nil
