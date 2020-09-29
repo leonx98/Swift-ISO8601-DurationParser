@@ -6,6 +6,7 @@ extension Swift_ISO8601_DurationParserTests {
     //   `swift test --generate-linuxmain`
     // to regenerate.
     static let __allTests__Swift_ISO8601_DurationParserTests = [
+        ("testDurationStringNotStartingWithPReturnsNil", testDurationStringNotStartingWithPReturnsNil),
         ("testFullStringParsedCorrectly", testFullStringParsedCorrectly),
         ("testIndividualDaysParsedCorrectly", testIndividualDaysParsedCorrectly),
         ("testIndividualHoursParsedCorrectly", testIndividualHoursParsedCorrectly),
@@ -13,6 +14,7 @@ extension Swift_ISO8601_DurationParserTests {
         ("testIndividualMonthsParsedCorrectly", testIndividualMonthsParsedCorrectly),
         ("testIndividualSecondsParsedCorrectly", testIndividualSecondsParsedCorrectly),
         ("testIndividualYearsParsedCorrectly", testIndividualYearsParsedCorrectly),
+        ("testWeeksParsedCorrectly", testWeeksParsedCorrectly),
     ]
 }
 

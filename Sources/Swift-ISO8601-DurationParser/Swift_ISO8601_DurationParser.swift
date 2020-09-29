@@ -37,16 +37,14 @@ import Foundation
 public extension DateComponents {
     // Note: Does not handle decimal values or overflow values
     // Format: PnYnMnDTnHnMnS or PnW
-    static func durationFrom8601String(durationString: String) -> DateComponents {
-        var durationString = durationString
-        var dateComponents = DateComponents()
-
-        guard durationString.contains("P") else {
+    static func durationFrom8601String(durationString: String) -> DateComponents? {
+        guard durationString.starts(with: "P") else {
             logErrorMessage(durationString: durationString)
-            return dateComponents
+            return nil
         }
 
-        durationString = durationString.replacingOccurrences(of: "P", with: "")
+        let durationString = String(durationString.dropFirst())
+        var dateComponents = DateComponents()
 
         if durationString.contains("W") {
             let weekValues = componentsForString(durationString, designatorSet: CharacterSet(charactersIn: "W"))
