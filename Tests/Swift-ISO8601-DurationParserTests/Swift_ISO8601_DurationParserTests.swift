@@ -51,4 +51,12 @@ final class Swift_ISO8601_DurationParserTests: XCTestCase {
         XCTAssertThrowsError(try DateComponents.from8601String("3Y6M4DT12H30M5S"))
         XCTAssertThrowsError(try DateComponents.from8601String("8W"))
     }
+
+    func testParsingFractions() {
+        let string = "PT0.5H45S"
+        let dateComponents = try! DateComponents.from8601String(string)
+        XCTAssertEqual(dateComponents.hour, 0)
+        XCTAssertEqual(dateComponents.minute, 30)
+        XCTAssertEqual(dateComponents.second, 45)
+    }
 }
