@@ -35,19 +35,22 @@ import Foundation
  */
 
 public extension DateComponents {
+    static func durationFrom8601String(_ durationString: String) -> DateComponents? {
+        try? Self.from8601String(durationString)
+    }
+
     // Note: Does not handle decimal values or overflow values
     // Format: PnYnMnDTnHnMnS or PnW
-    static func durationFrom8601String(_ durationString: String) -> DateComponents? {
+    static func from8601String(_ durationString: String) throws -> DateComponents {
         guard durationString.starts(with: "P") else {
-            logErrorMessage(durationString: durationString)
-            return nil
+            throw DurationParsingError.invalidFormat(durationString)
         }
 
         let durationString = String(durationString.dropFirst())
         var dateComponents = DateComponents()
 
         if durationString.contains("W") {
-            let weekValues = componentsForString(durationString, designatorSet: CharacterSet(charactersIn: "W"))
+            let weekValues = try componentsForString(durationString, designatorSet: CharacterSet(charactersIn: "W"))
 
             if let weekValue = weekValues["W"], let weekValueDouble = Double(weekValue) {
                 // 7 day week specified in ISO 8601 standard
@@ -68,13 +71,13 @@ public extension DateComponents {
         }
 
         // DnMnYn
-        let periodValues = componentsForString(periodString, designatorSet: CharacterSet(charactersIn: "YMD"))
+        let periodValues = try componentsForString(periodString, designatorSet: CharacterSet(charactersIn: "YMD"))
         dateComponents.day = Int(periodValues["D"] ?? "")
         dateComponents.month = Int(periodValues["M"] ?? "")
         dateComponents.year = Int(periodValues["Y"] ?? "")
 
         // SnMnHn
-        let timeValues = componentsForString(timeString, designatorSet: CharacterSet(charactersIn: "HMS"))
+        let timeValues = try componentsForString(timeString, designatorSet: CharacterSet(charactersIn: "HMS"))
         dateComponents.second = Int(timeValues["S"] ?? "")
         dateComponents.minute = Int(timeValues["M"] ?? "")
         dateComponents.hour = Int(timeValues["H"] ?? "")
@@ -82,7 +85,7 @@ public extension DateComponents {
         return dateComponents
     }
 
-    private static func componentsForString(_ string: String, designatorSet: CharacterSet) -> [String: String] {
+    private static func componentsForString(_ string: String, designatorSet: CharacterSet) throws -> [String: String] {
         if string.isEmpty {
             return [:]
         }
@@ -91,15 +94,22 @@ public extension DateComponents {
         let designatorValues = string.components(separatedBy: .decimalDigits).filter { !$0.isEmpty }
 
         guard componentValues.count == designatorValues.count else {
-            print("String: \(string) has an invalid format")
-            return [:]
+            throw DurationParsingError.invalidFormat(string)
         }
 
         return Dictionary(uniqueKeysWithValues: zip(designatorValues, componentValues))
     }
 
-    private static func logErrorMessage(durationString: String) {
-        print("String: \(durationString) has an invalid format")
-        print("The durationString must have a format of PnYnMnDTnHnMnS or PnW")
+    enum DurationParsingError: Error {
+        case invalidFormat(String)
+    }
+}
+
+extension DateComponents.DurationParsingError: LocalizedError {
+    public var errorDescription: String? {
+        switch self {
+        case .invalidFormat(let durationString):
+            return "\(durationString) has an invalid format, The durationString must have a format of PnYnMnDTnHnMnS or PnW"
+        }
     }
 }
