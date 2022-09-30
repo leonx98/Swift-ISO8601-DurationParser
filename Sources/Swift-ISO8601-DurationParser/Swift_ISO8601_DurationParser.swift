@@ -35,24 +35,23 @@ import Foundation
  */
 
 public extension DateComponents {
-    // Note: Does not handle decimal values or overflow values
-    // Format: PnYnMnDTnHnMnS or PnW
     static func durationFrom8601String(_ durationString: String) -> DateComponents? {
+        try? Self.from8601String(durationString)
+    }
+
+    // Note: Does not handle fractional values for months
+    // Format: PnYnMnDTnHnMnS or PnW
+    static func from8601String(_ durationString: String) throws -> DateComponents {
         guard durationString.starts(with: "P") else {
-            logErrorMessage(durationString: durationString)
-            return nil
+            throw DurationParsingError.invalidFormat(durationString)
         }
 
         let durationString = String(durationString.dropFirst())
         var dateComponents = DateComponents()
 
-        if durationString.contains("W") {
-            let weekValues = componentsForString(durationString, designatorSet: CharacterSet(charactersIn: "W"))
-
-            if let weekValue = weekValues["W"], let weekValueDouble = Double(weekValue) {
-                // 7 day week specified in ISO 8601 standard
-                dateComponents.day = Int(weekValueDouble * 7.0)
-            }
+        if let week = componentFor("W", in: durationString) {
+            // 7 day week specified in ISO 8601 standard
+            dateComponents.day = Int(week * 7.0)
             return dateComponents
         }
 
@@ -68,38 +67,69 @@ public extension DateComponents {
         }
 
         // DnMnYn
-        let periodValues = componentsForString(periodString, designatorSet: CharacterSet(charactersIn: "YMD"))
-        dateComponents.day = Int(periodValues["D"] ?? "")
-        dateComponents.month = Int(periodValues["M"] ?? "")
-        dateComponents.year = Int(periodValues["Y"] ?? "")
+        let year = componentFor("Y", in: periodString)
+        let month = componentFor("M", in: periodString).addingFractionsFrom(year, multiplier: 12)
+        let day = componentFor("D", in: periodString)
+
+        if let monthFraction = month?.truncatingRemainder(dividingBy: 1),
+            monthFraction != 0 {
+            // Representing fractional months isn't supported by DateComponents, so we don't allow it here
+            throw DurationParsingError.unsupportedFractionsForMonth(durationString)
+        }
+
+        dateComponents.year = year?.nonFractionParts
+        dateComponents.month = month?.nonFractionParts
+        dateComponents.day = day?.nonFractionParts
 
         // SnMnHn
-        let timeValues = componentsForString(timeString, designatorSet: CharacterSet(charactersIn: "HMS"))
-        dateComponents.second = Int(timeValues["S"] ?? "")
-        dateComponents.minute = Int(timeValues["M"] ?? "")
-        dateComponents.hour = Int(timeValues["H"] ?? "")
+        let hour = componentFor("H", in: timeString).addingFractionsFrom(day, multiplier: 24)
+        let minute = componentFor("M", in: timeString).addingFractionsFrom(hour, multiplier: 60)
+        let second = componentFor("S", in: timeString).addingFractionsFrom(minute, multiplier: 60)
+        dateComponents.hour = hour?.nonFractionParts
+        dateComponents.minute = minute?.nonFractionParts
+        dateComponents.second = second?.nonFractionParts
 
         return dateComponents
     }
 
-    private static func componentsForString(_ string: String, designatorSet: CharacterSet) -> [String: String] {
-        if string.isEmpty {
-            return [:]
-        }
-
-        let componentValues = string.components(separatedBy: designatorSet).filter { !$0.isEmpty }
-        let designatorValues = string.components(separatedBy: .decimalDigits).filter { !$0.isEmpty }
-
-        guard componentValues.count == designatorValues.count else {
-            print("String: \(string) has an invalid format")
-            return [:]
-        }
-
-        return Dictionary(uniqueKeysWithValues: zip(designatorValues, componentValues))
+    private static func componentFor(_ designator: String, in string: String) -> Double? {
+        // First split by the designator we're interested in, and then split by all separators. This should give us whatever's before our designator, but after the previous one.
+        let beforeDesignator = string.components(separatedBy: designator).first?.components(separatedBy: .separators).last
+        return beforeDesignator.flatMap { Double($0) }
     }
 
-    private static func logErrorMessage(durationString: String) {
-        print("String: \(durationString) has an invalid format")
-        print("The durationString must have a format of PnYnMnDTnHnMnS or PnW")
+    enum DurationParsingError: Error {
+        case invalidFormat(String)
+        case unsupportedFractionsForMonth(String)
+    }
+}
+
+private extension Optional where Wrapped == Double {
+    func addingFractionsFrom(_ other: Double?, multiplier: Double) -> Self {
+        guard let other = other else { return self }
+        let toAdd = other.truncatingRemainder(dividingBy: 1) * multiplier
+        guard let self = self else { return toAdd }
+        return self + toAdd
+    }
+}
+
+private extension Double {
+    var nonFractionParts: Int {
+        Int(floor(self))
+    }
+}
+
+private extension CharacterSet {
+    static let separators = CharacterSet(charactersIn: "PWTYMDHMS")
+}
+
+extension DateComponents.DurationParsingError: LocalizedError {
+    public var errorDescription: String? {
+        switch self {
+        case .invalidFormat(let durationString):
+            return "\(durationString) has an invalid format, The durationString must have a format of PnYnMnDTnHnMnS or PnW"
+        case .unsupportedFractionsForMonth(let durationString):
+            return "\(durationString) has an invalid format, fractions aren't supported for the month-position"
+        }
     }
 }

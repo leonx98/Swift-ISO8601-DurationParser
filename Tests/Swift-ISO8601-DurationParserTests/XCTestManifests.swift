@@ -14,6 +14,7 @@ extension Swift_ISO8601_DurationParserTests {
         ("testIndividualMonthsParsedCorrectly", testIndividualMonthsParsedCorrectly),
         ("testIndividualSecondsParsedCorrectly", testIndividualSecondsParsedCorrectly),
         ("testIndividualYearsParsedCorrectly", testIndividualYearsParsedCorrectly),
+        ("testParsingFractions", testParsingFractions),
         ("testWeeksParsedCorrectly", testWeeksParsedCorrectly),
     ]
 }
