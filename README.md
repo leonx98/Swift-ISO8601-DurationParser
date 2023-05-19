@@ -31,7 +31,7 @@ componentsForWeeks?.day //56
 You can use [SPM](https://github.com/apple/swift-package-manager). Add the following to your `Package.swift`.
 
 ```swift
-.package(url: "https://github.com/leonx98/Swift-ISO8601-DurationParser.git", .upToNextMajor(from: "0.9.0")),
+.package(url: "https://github.com/leonx98/Swift-ISO8601-DurationParser.git", .upToNextMajor(from: "1.0.0")),
 ```
 
 ## Donation
