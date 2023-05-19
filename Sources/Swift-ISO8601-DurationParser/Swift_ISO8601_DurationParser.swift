@@ -87,7 +87,7 @@ public extension DateComponents {
         let second = componentFor("S", in: timeString).addingFractionsFrom(minute, multiplier: 60)
         dateComponents.hour = hour?.nonFractionParts
         dateComponents.minute = minute?.nonFractionParts
-        dateComponents.second = second?.nonFractionParts
+        dateComponents.second = second.map { Int($0.rounded()) }
 
         return dateComponents
     }
